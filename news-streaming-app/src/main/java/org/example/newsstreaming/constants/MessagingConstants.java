@@ -14,5 +14,5 @@ public interface MessagingConstants {
     String INVALID_REQUEST_ERROR_MSG = "Invalid request parameters";
     String INVALID_API_KEY_ERROR_MSG = "The apiKey or Authorization parameters are Invalid";
     String REST_PROCESSING_ERROR_MSG = "Processing error [%s] occurred on the destination side";
-    String PROCESSING_ERROR_MSG = "Processing error occurred";
+    String PROCESSING_ERROR_MSG = "Processing error has occurred";
 }

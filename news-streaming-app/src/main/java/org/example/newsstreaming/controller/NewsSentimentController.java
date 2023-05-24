@@ -1,5 +1,6 @@
 package org.example.newsstreaming.controller;
 
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.example.newsstreaming.constants.SentimentType;
 import org.example.newsstreaming.response.NewsSentimentReportResponse;
