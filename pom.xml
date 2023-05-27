@@ -10,6 +10,7 @@
     <modules>
         <module>spark-analyzer</module>
         <module>news-streaming-app</module>
+        <module>flink-analyzer</module>
     </modules>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
