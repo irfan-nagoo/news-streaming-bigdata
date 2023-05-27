@@ -3,7 +3,7 @@
 ![spark](https://github.com/irfan-nagoo/news-streaming-bigdata/assets/96521607/1211cd07-8eaa-4270-91f6-a6327aeb9f6f)
 
 
-This Project is a collection of heterogenous applications which perform the real time Sentiment Analysis of the latest News data and expose a set of REST APIs to retrieve news with sentiment information. The latest news data is pulled from newsdata.io, is processed and stored in Bigdata database (Cassandra DB). This project provides modules for Apache Spark (4G technology of streaming processing) as well as Apache Flink (5G technology of stream processing). Anyone could be used as per requirement.
+This Project is a collection of heterogenous applications which perform the real time Sentiment Analysis of the latest News data and expose a set of REST APIs to retrieve news with sentiment information. The latest news data is pulled from newsdata.io, is processed and stored in Bigdata database (Cassandra DB). This project includes streaming application for Apache Spark (4G technology of streaming processing) as well as Apache Flink (5G technology of stream processing). Anyone could be used as per requirement.
 
 
 This project is a typical example of an open source Data Pipeline setup (above diagram is for illustration only). This project includes following components:
