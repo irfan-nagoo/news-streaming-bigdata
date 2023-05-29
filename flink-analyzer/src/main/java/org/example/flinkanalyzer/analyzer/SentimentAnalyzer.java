@@ -8,9 +8,9 @@ import opennlp.tools.util.InputStreamFactory;
 import opennlp.tools.util.ObjectStream;
 import opennlp.tools.util.PlainTextByLineStream;
 import opennlp.tools.util.TrainingParameters;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
-import org.apache.flink.table.functions.ScalarFunction;
+import org.apache.flink.streaming.api.datastream.DataStream;
+import org.example.flinkanalyzer.domain.NewsObject;
+import org.example.flinkanalyzer.entity.NewsSentiment;
 import org.example.flinkanalyzer.helper.PropertyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,21 +19,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
-import java.sql.Timestamp;
-import java.time.LocalDate;
-
-import static org.apache.flink.table.api.Expressions.call;
-import static org.apache.flink.table.api.Expressions.col;
+import java.time.LocalDateTime;
 
 /**
  * @author irfan.nagoo
  */
-public class SentimentAnalyzer implements Analyzer<Table, Table>, Serializable {
+public class SentimentAnalyzer implements Analyzer<DataStream<NewsObject>, DataStream<NewsSentiment>>, Serializable {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SentimentAnalyzer.class);
 
-    private static final DoccatModel DOC_CATEGORY_MODEL;
     private static final TokenizerME TOKENIZER_ME;
+    private static final DoccatModel DOC_CATEGORY_MODEL;
 
     static {
         try {
@@ -45,24 +41,32 @@ public class SentimentAnalyzer implements Analyzer<Table, Table>, Serializable {
         }
     }
 
-    public SentimentAnalyzer(StreamTableEnvironment sTableEnvironment) {
-        // register user defined functions
-        registerUDFs(sTableEnvironment);
+    public SentimentAnalyzer() {
+
     }
 
     @Override
-    public Table analyze(Table table) {
+    public DataStream<NewsSentiment> analyze(DataStream<NewsObject> newsDS) {
         LOGGER.info("Initializing SentimentAnalyzer");
-        // select required columns, analyze and return
-        return table.select(col("title"), col("link"),
-                col("pubDate"), col("image_url").as("imageUrl"),
-                call("getPartDate", col("pubDate")).as("partDate"),
-                call("generateTimeUUID").as("timeUUID"),
-                call("sentimentFinder", col("content")).as("sentiment"),
-                call("currentTimestamp").as("createTimestamp"));
+        // analyze and transform the input data stream to New Sentiment DS
+        return newsDS.map(this::mapToNewsSentiment);
     }
 
-    public String findSentiment(String input) {
+    private NewsSentiment mapToNewsSentiment(NewsObject news) {
+        NewsSentiment newsSentiment = new NewsSentiment();
+        newsSentiment.setPartDate(news.getPubDate().toLocalDateTime().toLocalDate());
+        newsSentiment.setPubDate(news.getPubDate().toLocalDateTime());
+        newsSentiment.setId(UUIDs.timeBased());
+        newsSentiment.setTitle(news.getTitle());
+        newsSentiment.setLink(news.getLink());
+        newsSentiment.setImageUrl(news.getImage_url());
+        newsSentiment.setSentiment(findSentiment(news.getContent()));
+        newsSentiment.setCreateTimestamp(LocalDateTime.now());
+        return newsSentiment;
+    }
+
+    private String findSentiment(String input) {
+        // find the sentiment of the input using Apache OpenNLP ML (Artificial Intelligence) library
         String[] tokens = TOKENIZER_ME.tokenize(input);
         DocumentCategorizerME documentCategorizerME = new DocumentCategorizerME(DOC_CATEGORY_MODEL);
         double[] result = documentCategorizerME.categorize(tokens);
@@ -95,30 +99,6 @@ public class SentimentAnalyzer implements Analyzer<Table, Table>, Serializable {
 
     private static InputStream getInputStream(String modelFilePath) {
         return SentimentAnalyzer.class.getClassLoader().getResourceAsStream(modelFilePath);
-    }
-
-    private void registerUDFs(StreamTableEnvironment sTableEnvironment) {
-        sTableEnvironment.createTemporarySystemFunction("getPartDate", PartitionDate.class);
-        sTableEnvironment.createTemporarySystemFunction("generateTimeUUID", TimeUUID.class);
-        sTableEnvironment.createTemporarySystemFunction("sentimentFinder", this.new SentimentFinder());
-    }
-
-    public static class PartitionDate extends ScalarFunction {
-        public LocalDate eval(Timestamp pubDate) {
-            return pubDate.toLocalDateTime().toLocalDate();
-        }
-    }
-
-    public static class TimeUUID extends ScalarFunction {
-        public String eval() {
-            return UUIDs.timeBased().toString();
-        }
-    }
-
-    public class SentimentFinder extends ScalarFunction {
-        public String eval(String input) {
-            return findSentiment(input);
-        }
     }
 
 

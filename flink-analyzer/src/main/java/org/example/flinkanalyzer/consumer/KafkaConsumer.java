@@ -3,10 +3,8 @@ package org.example.flinkanalyzer.consumer;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
 import org.apache.flink.connector.kafka.source.KafkaSource;
 import org.apache.flink.connector.kafka.source.enumerator.initializer.OffsetsInitializer;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
+import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.table.api.Table;
-import org.apache.flink.table.api.bridge.java.StreamTableEnvironment;
 import org.example.flinkanalyzer.deserializer.JsonDeserializationSchema;
 import org.example.flinkanalyzer.domain.NewsObject;
 import org.example.flinkanalyzer.helper.PropertyLoader;
@@ -17,21 +15,19 @@ import org.slf4j.LoggerFactory;
  * @author irfan.nagoo
  */
 
-public class KafkaConsumer implements Consumer<Table> {
+public class KafkaConsumer implements Consumer<DataStream<NewsObject>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaConsumer.class);
 
     private final StreamExecutionEnvironment sExecutionEnvironment;
-    private final StreamTableEnvironment sTableEnvironment;
 
-    public KafkaConsumer(StreamExecutionEnvironment sExecutionEnvironment, StreamTableEnvironment sTableEnvironment) {
+    public KafkaConsumer(StreamExecutionEnvironment sExecutionEnvironment) {
         this.sExecutionEnvironment = sExecutionEnvironment;
-        this.sTableEnvironment = sTableEnvironment;
+
     }
 
-
     @Override
-    public Table consume() {
+    public DataStream<NewsObject> consume() {
         LOGGER.info("Initializing KafkaConsumer");
         // setup kafka data source topic
         KafkaSource<NewsObject> kafkaSource = KafkaSource.<NewsObject>builder()
@@ -42,12 +38,9 @@ public class KafkaConsumer implements Consumer<Table> {
                 .setValueOnlyDeserializer(new JsonDeserializationSchema())
                 .build();
 
-        // convert to new object data stream
-        DataStreamSource<NewsObject> dsSource = sExecutionEnvironment
+        // consume new object data stream messages
+        return sExecutionEnvironment
                 .fromSource(kafkaSource, WatermarkStrategy.noWatermarks(), "Kafka");
-
-        // convert to Table format
-        return sTableEnvironment.fromDataStream(dsSource);
     }
 
 }

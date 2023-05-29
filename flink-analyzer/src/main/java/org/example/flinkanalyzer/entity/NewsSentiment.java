@@ -1,6 +1,9 @@
 package org.example.flinkanalyzer.entity;
 
-import com.datastax.driver.mapping.annotations.*;
+import com.datastax.driver.mapping.annotations.ClusteringColumn;
+import com.datastax.driver.mapping.annotations.Column;
+import com.datastax.driver.mapping.annotations.PartitionKey;
+import com.datastax.driver.mapping.annotations.Table;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,9 +23,7 @@ public class NewsSentiment {
     @Column(name = "pub_date")
     private LocalDateTime pubDate;
     @Column(name = "id")
-    private transient UUID id;
-    @Transient
-    private String timeUUID;
+    private UUID id;
     @Column(name = "title")
     private String title;
     @Column(name = "link")
@@ -56,15 +57,6 @@ public class NewsSentiment {
 
     public void setId(UUID id) {
         this.id = id;
-    }
-
-    public String getTimeUUID() {
-        return timeUUID;
-    }
-
-    public void setTimeUUID(String timeUUID) {
-        this.timeUUID = timeUUID;
-        this.id = UUID.fromString(timeUUID);
     }
 
     public String getTitle() {
