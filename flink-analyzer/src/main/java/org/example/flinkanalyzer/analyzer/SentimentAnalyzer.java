@@ -80,21 +80,22 @@ public class SentimentAnalyzer implements Analyzer<DataStream<NewsObject>, DataS
     private static DoccatModel getDoccatModel(String trainFilePath) throws IOException {
         // read plain text train input file
         InputStreamFactory isf = () -> getInputStream(trainFilePath);
-        ObjectStream<DocumentSample> objStream = new DocumentSampleStream(new PlainTextByLineStream(isf,
-                Charset.defaultCharset()));
+        try (ObjectStream<DocumentSample> objStream = new DocumentSampleStream(new PlainTextByLineStream(isf,
+                Charset.defaultCharset()))) {
 
-        // customize doc category factory with feature generators for
-        // processing words in a given input
-        FeatureGenerator[] featureGenerators = new FeatureGenerator[]{new NGramFeatureGenerator(1, 1),
-                new NGramFeatureGenerator(2, 3), new BagOfWordsFeatureGenerator()};
+            // customize doc category factory with feature generators for
+            // processing words in a given input
+            FeatureGenerator[] featureGenerators = new FeatureGenerator[]{new NGramFeatureGenerator(1, 1),
+                    new NGramFeatureGenerator(2, 3), new BagOfWordsFeatureGenerator()};
 
-        // Training parameters-
-        //   CUTOFF_PARAM - Minimum number of words to be considered in a given category
-        //   ITERATIONS_PARAM - Number of iteration to perform
-        TrainingParameters trainingParameters = TrainingParameters.defaultParams();
-        trainingParameters.put(TrainingParameters.CUTOFF_PARAM, 1);
-        trainingParameters.put(TrainingParameters.ITERATIONS_PARAM, 10);
-        return DocumentCategorizerME.train("en", objStream, trainingParameters, new DoccatFactory(featureGenerators));
+            // Training parameters-
+            //   CUTOFF_PARAM - Minimum number of words to be considered in a given category
+            //   ITERATIONS_PARAM - Number of iteration to perform
+            TrainingParameters trainingParameters = TrainingParameters.defaultParams();
+            trainingParameters.put(TrainingParameters.CUTOFF_PARAM, 1);
+            trainingParameters.put(TrainingParameters.ITERATIONS_PARAM, 10);
+            return DocumentCategorizerME.train("en", objStream, trainingParameters, new DoccatFactory(featureGenerators));
+        }
     }
 
     private static InputStream getInputStream(String modelFilePath) {
