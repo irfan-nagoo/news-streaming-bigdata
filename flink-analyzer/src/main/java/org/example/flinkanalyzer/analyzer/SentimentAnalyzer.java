@@ -74,7 +74,9 @@ public class SentimentAnalyzer implements Analyzer<DataStream<NewsObject>, DataS
     }
 
     private static TokenizerME getTokenizerME(String tokenFilePath) throws IOException {
-        return new TokenizerME(new TokenizerModel(getInputStream(tokenFilePath)));
+        try (InputStream is = getInputStream(tokenFilePath)) {
+            return new TokenizerME(new TokenizerModel(is));
+        }
     }
 
     private static DoccatModel getDoccatModel(String trainFilePath) throws IOException {

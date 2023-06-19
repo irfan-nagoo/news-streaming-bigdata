@@ -45,10 +45,8 @@ public class SentimentAnalyzer implements Analyzer<Dataset<Row>, Dataset<Row>>, 
         try {
             // register user defined functions
             registerUDFs(sparkSession);
-            tokenizerME = Optional.ofNullable(tokenizerME)
-                    .orElse(new TokenizerME(new TokenizerModel(getInputStream(tokenizerPath))));
-            doccatModel = Optional.ofNullable(doccatModel)
-                    .orElse(getDoccatModel(trainFilePath));
+            tokenizerME = Optional.ofNullable(tokenizerME).orElse(getTokenizerME(tokenizerPath));
+            doccatModel = Optional.ofNullable(doccatModel).orElse(getDoccatModel(trainFilePath));
         } catch (IOException e) {
             LOGGER.info("Exception occurred while initializing the Analyzer: ", e);
             throw new IllegalArgumentException("Invalid tokenizer or train file path", e);
@@ -74,7 +72,13 @@ public class SentimentAnalyzer implements Analyzer<Dataset<Row>, Dataset<Row>>, 
         return documentCategorizerME.getBestCategory(result);
     }
 
-    private DoccatModel getDoccatModel(String trainFilePath) throws IOException {
+    private static TokenizerME getTokenizerME(String tokenFilePath) throws IOException {
+        try (InputStream is = getInputStream(tokenFilePath)) {
+            return new TokenizerME(new TokenizerModel(is));
+        }
+    }
+
+    private static DoccatModel getDoccatModel(String trainFilePath) throws IOException {
         // read plain text train input file
         InputStreamFactory isf = () -> getInputStream(trainFilePath);
         try (ObjectStream<DocumentSample> objStream = new DocumentSampleStream(new PlainTextByLineStream(isf,
@@ -95,7 +99,7 @@ public class SentimentAnalyzer implements Analyzer<Dataset<Row>, Dataset<Row>>, 
         }
     }
 
-    private static InputStream getInputStream(String modelFilePath) throws IOException {
+    private static InputStream getInputStream(String modelFilePath) {
         return SentimentAnalyzer.class.getClassLoader().getResourceAsStream(modelFilePath);
     }
 
